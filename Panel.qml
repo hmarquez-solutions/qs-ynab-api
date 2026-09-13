@@ -15,6 +15,9 @@ Panel {
   property var hostWidget: null
   property var service: hostWidget && hostWidget.service ? hostWidget.service : (bar?.shell?.serviceFor("io.github.elevate08.ynab-glance"))
   property var anchorItem: hostWidget ? hostWidget.anchorItem : null
+  // The bar tracks BarWidget.qml, not this nested panel. Popout coordination
+  // and the open-panel mark compare against the slot's active item.
+  readonly property var barIdentity: hostWidget || root
 
   implicitWidth: 0
   implicitHeight: 0
@@ -169,15 +172,27 @@ Panel {
     id: keyboardPanel
     anchorItem: root.anchorItem
     bar: root.bar
-    owner: root
+    owner: root.barIdentity
     open: root.opened
-    contentWidth: Style.space(420)
-    contentHeight: Style.space(580)
+    // Bind directly to availableCard* so the card re-clamps when the
+    // screen/bar geometry becomes known. A JS helper call can stick at
+    // the unclamped 580px from the first eval (screen still 0).
+    contentWidth: {
+      var desired = Style.space(480)
+      var maxW = keyboardPanel.availableCardWidth
+      return Math.round(maxW > 0 ? Math.min(desired, maxW) : desired)
+    }
+    contentHeight: {
+      var desired = Style.space(520)
+      var maxH = keyboardPanel.availableCardHeight
+      return Math.round(maxH > 0 ? Math.min(desired, maxH) : desired)
+    }
     focusTarget: keyCatcher
 
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
+      clip: true
       blocked: tokenInput.activeFocus
 
       onCloseRequested: root.dismissCurrentView()
@@ -288,7 +303,6 @@ Panel {
 
         ColumnLayout {
           anchors.fill: parent
-          anchors.margins: Style.spacing.popupPadding
           spacing: Style.space(8)
 
           // ================= TOP HEADER =================
@@ -319,16 +333,6 @@ Panel {
 
             Item { Layout.fillWidth: true }
 
-            // Budget Switcher Dropdown Button
-            Button {
-              visible: root.authenticated && root.overviewData && root.overviewData.budgets && root.overviewData.budgets.length > 1
-              text: Model.plainLabel((root.overviewData && root.overviewData.active_budget_name ? root.overviewData.active_budget_name : "Budget") + " 󰁥")
-              tooltipText: "Switch Budget (Alt+M)"
-              selected: root.showBudgetSelector
-              onClicked: root.showBudgetSelector = !root.showBudgetSelector
-            }
-
-            // Web App Launch Button
             Button {
               text: "󰖟"
               tooltipText: "Open YNAB Web App in Browser (Alt+W)"
@@ -336,7 +340,6 @@ Panel {
               visible: root.authenticated
             }
 
-            // Refresh Button
             Button {
               text: root.loading ? "…" : "󰑐"
               tooltipText: "Refresh budget data (Alt+R)"
@@ -344,7 +347,6 @@ Panel {
               visible: root.authenticated
             }
 
-            // Settings Button
             Button {
               text: "󰒓"
               tooltipText: root.showSettings ? "Exit Settings (Alt+S or Esc)" : "Settings (Alt+S)"
@@ -354,6 +356,16 @@ Panel {
                 root.showBudgetSelector = false
               }
             }
+          }
+
+          Button {
+            Layout.fillWidth: true
+            visible: root.authenticated && root.overviewData && root.overviewData.budgets && root.overviewData.budgets.length > 1
+            leftAlign: true
+            text: Model.plainLabel((root.overviewData && root.overviewData.active_budget_name ? root.overviewData.active_budget_name : "Budget") + "  󰁥")
+            tooltipText: "Switch Budget (Alt+M)"
+            selected: root.showBudgetSelector
+            onClicked: root.showBudgetSelector = !root.showBudgetSelector
           }
 
           // ================= HEADER BUDGET SWITCHER DROPDOWN =================
@@ -420,6 +432,7 @@ Panel {
           ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 0
             visible: !root.authenticated && !root.showSettings
             spacing: Style.space(12)
 
@@ -506,6 +519,7 @@ Panel {
           Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 0
             visible: root.showSettings
 
             ScrollView {
@@ -809,6 +823,7 @@ Panel {
           ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 0
             visible: root.authenticated && !root.showSettings
             spacing: Style.space(8)
 
@@ -816,6 +831,7 @@ Panel {
             Item {
               Layout.fillWidth: true
               Layout.fillHeight: true
+              Layout.minimumHeight: 0
               visible: root.activeTab === 0
 
               ColumnLayout {
@@ -1022,13 +1038,22 @@ Panel {
                 }
 
                 // 4. SCROLLABLE CATEGORY GROUPS WITH COLLAPSIBLE HEADERS
-                ScrollView {
+                Flickable {
+                  id: bucketsFlick
                   Layout.fillWidth: true
                   Layout.fillHeight: true
+                  Layout.minimumHeight: 0
                   clip: true
+                  contentWidth: width
+                  contentHeight: bucketsColumn.implicitHeight
+                  boundsBehavior: Flickable.StopAtBounds
+                  flickableDirection: Flickable.VerticalFlick
+                  interactive: contentHeight > height
+                  ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                   ColumnLayout {
-                    width: parent.width - Style.space(16)
+                    id: bucketsColumn
+                    width: bucketsFlick.width
                     spacing: Style.space(10)
 
                     Repeater {
@@ -1174,6 +1199,7 @@ Panel {
             Item {
               Layout.fillWidth: true
               Layout.fillHeight: true
+              Layout.minimumHeight: 0
               visible: root.activeTab === 1
 
               ScrollView {
@@ -1399,6 +1425,7 @@ Panel {
             Item {
               Layout.fillWidth: true
               Layout.fillHeight: true
+              Layout.minimumHeight: 0
               visible: root.activeTab === 2
 
               ColumnLayout {
@@ -1421,14 +1448,22 @@ Panel {
                 }
 
                 // Interactive Drill-Down or All Groups Legend
-                ScrollView {
+                Flickable {
+                  id: spendingFlick
                   Layout.fillWidth: true
                   Layout.fillHeight: true
+                  Layout.minimumHeight: 0
                   clip: true
-                  ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                  contentWidth: width
+                  contentHeight: spendingColumn.implicitHeight
+                  boundsBehavior: Flickable.StopAtBounds
+                  flickableDirection: Flickable.VerticalFlick
+                  interactive: contentHeight > height
+                  ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                   ColumnLayout {
-                    width: parent.width - Style.space(16)
+                    id: spendingColumn
+                    width: spendingFlick.width
                     spacing: Style.space(6)
 
                     // Mode A: Detail View when a Group is Selected
@@ -1644,9 +1679,12 @@ Panel {
               RowLayout {
                 id: tabRow
                 anchors.centerIn: parent
+                width: parent.width - Style.space(8)
                 spacing: Style.space(6)
 
                 Button {
+                  Layout.fillWidth: true
+                  Layout.minimumWidth: 0
                   text: "Buckets"
                   tooltipText: "Budget Buckets (Alt+1 or Alt+B)"
                   selected: root.activeTab === 0
@@ -1654,14 +1692,18 @@ Panel {
                 }
 
                 Button {
-                  text: "Income & Age"
+                  Layout.fillWidth: true
+                  Layout.minimumWidth: 0
+                  text: "Income"
                   tooltipText: "Income vs Spending & Age of Money (Alt+2 or Alt+I)"
                   selected: root.activeTab === 1
                   onClicked: root.activeTab = 1
                 }
 
                 Button {
-                  text: "Spending Analysis"
+                  Layout.fillWidth: true
+                  Layout.minimumWidth: 0
+                  text: "Spending"
                   tooltipText: "Spending Pie Chart & Breakdown (Alt+3 or Alt+P)"
                   selected: root.activeTab === 2
                   onClicked: root.activeTab = 2

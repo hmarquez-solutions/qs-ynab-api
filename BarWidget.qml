@@ -52,6 +52,7 @@ BarWidget {
   }
 
   visible: true
+  clip: true
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
@@ -99,7 +100,12 @@ BarWidget {
     active: true
     source: Qt.resolvedUrl("Panel.qml")
     visible: false
-    onLoaded: root.injectPanel()
+    width: 0
+    height: 0
+    onLoaded: {
+      root.injectPanel()
+      Qt.callLater(root.injectPanel)
+    }
   }
 
   BarIconButton {
