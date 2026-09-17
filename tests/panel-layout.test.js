@@ -20,8 +20,8 @@ check("card width uses KeyboardPanel.fittedContentWidth",
   /contentWidth:\s*keyboardPanel\.fittedContentWidth\(Style\.space\(480\)\)/.test(panel),
   "expected contentWidth: keyboardPanel.fittedContentWidth(Style.space(480))")
 check("card height uses KeyboardPanel.cappedContentHeight",
-  /contentHeight:\s*keyboardPanel\.cappedContentHeight\(Style\.space\(580\)\)/.test(panel),
-  "expected contentHeight: keyboardPanel.cappedContentHeight(Style.space(580))")
+  /contentHeight:\s*keyboardPanel\.cappedContentHeight\(Style\.space\(680\)\)/.test(panel),
+  "expected contentHeight: keyboardPanel.cappedContentHeight(Style.space(680))")
 check("panel does not reimplement availableCard* clamping",
   !/availableCardWidth/.test(panel) && !/availableCardHeight/.test(panel),
   "hand-rolled availableCard* clamp is still in Panel.qml")
