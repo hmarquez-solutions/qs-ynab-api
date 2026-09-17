@@ -15,8 +15,7 @@ Panel {
   property var hostWidget: null
   property var service: hostWidget && hostWidget.service ? hostWidget.service : (bar?.shell?.serviceFor("io.github.elevate08.ynab-glance"))
   property var anchorItem: hostWidget ? hostWidget.anchorItem : null
-  // The bar tracks BarWidget.qml, not this nested panel. Popout coordination
-  // and the open-panel mark compare against the slot's active item.
+  // Popout identity is the bar slot, not this nested panel.
   readonly property var barIdentity: hostWidget || root
 
   implicitWidth: 0
@@ -35,7 +34,7 @@ Panel {
   property string activeBudgetId: service ? service.activeBudgetId : setting("defaultBudgetId", "")
   property int runtimeRefreshHours: service ? service.runtimeRefreshHours : setting("refreshIntervalHours", 24)
 
-  property int activeTab: 0 // 0: Buckets, 1: Income & Age, 2: Spending Analysis
+  property int activeTab: 0 // 0: Buckets, 1: Income, 2: Spending
   property bool showSettings: false
   property bool showBudgetSelector: false
   property bool showSettingsBudgetDropdown: false
@@ -174,19 +173,8 @@ Panel {
     bar: root.bar
     owner: root.barIdentity
     open: root.opened
-    // Bind directly to availableCard* so the card re-clamps when the
-    // screen/bar geometry becomes known. A JS helper call can stick at
-    // the unclamped 580px from the first eval (screen still 0).
-    contentWidth: {
-      var desired = Style.space(480)
-      var maxW = keyboardPanel.availableCardWidth
-      return Math.round(maxW > 0 ? Math.min(desired, maxW) : desired)
-    }
-    contentHeight: {
-      var desired = Style.space(520)
-      var maxH = keyboardPanel.availableCardHeight
-      return Math.round(maxH > 0 ? Math.min(desired, maxH) : desired)
-    }
+    contentWidth: keyboardPanel.fittedContentWidth(Style.space(480))
+    contentHeight: keyboardPanel.cappedContentHeight(Style.space(520))
     focusTarget: keyCatcher
 
     PanelKeyCatcher {
@@ -522,15 +510,14 @@ Panel {
             Layout.minimumHeight: 0
             visible: root.showSettings
 
-            ScrollView {
-              id: settingsScroll
+            VerticalFlick {
+              id: settingsFlick
               anchors.fill: parent
-              clip: true
-              ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+              contentHeight: settingsColumn.implicitHeight
 
               Column {
                 id: settingsColumn
-                width: settingsScroll.width - Style.space(16)
+                width: settingsFlick.width
                 spacing: Style.space(12)
 
                 // Top Settings Title
@@ -1038,18 +1025,12 @@ Panel {
                 }
 
                 // 4. SCROLLABLE CATEGORY GROUPS WITH COLLAPSIBLE HEADERS
-                Flickable {
+                VerticalFlick {
                   id: bucketsFlick
                   Layout.fillWidth: true
                   Layout.fillHeight: true
                   Layout.minimumHeight: 0
-                  clip: true
-                  contentWidth: width
                   contentHeight: bucketsColumn.implicitHeight
-                  boundsBehavior: Flickable.StopAtBounds
-                  flickableDirection: Flickable.VerticalFlick
-                  interactive: contentHeight > height
-                  ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                   ColumnLayout {
                     id: bucketsColumn
@@ -1202,13 +1183,14 @@ Panel {
               Layout.minimumHeight: 0
               visible: root.activeTab === 1
 
-              ScrollView {
+              VerticalFlick {
+                id: incomeFlick
                 anchors.fill: parent
-                clip: true
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                contentHeight: incomeColumn.implicitHeight
 
                 ColumnLayout {
-                  width: parent.width - Style.space(16)
+                  id: incomeColumn
+                  width: incomeFlick.width
                   spacing: Style.space(10)
 
                   // 1. Age of Money Card
@@ -1448,18 +1430,12 @@ Panel {
                 }
 
                 // Interactive Drill-Down or All Groups Legend
-                Flickable {
+                VerticalFlick {
                   id: spendingFlick
                   Layout.fillWidth: true
                   Layout.fillHeight: true
                   Layout.minimumHeight: 0
-                  clip: true
-                  contentWidth: width
                   contentHeight: spendingColumn.implicitHeight
-                  boundsBehavior: Flickable.StopAtBounds
-                  flickableDirection: Flickable.VerticalFlick
-                  interactive: contentHeight > height
-                  ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                   ColumnLayout {
                     id: spendingColumn
@@ -1714,4 +1690,13 @@ Panel {
         }
       }
     }
+
+  component VerticalFlick: Flickable {
+    clip: true
+    contentWidth: width
+    boundsBehavior: Flickable.StopAtBounds
+    flickableDirection: Flickable.VerticalFlick
+    interactive: contentHeight > height
+    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
   }
+}

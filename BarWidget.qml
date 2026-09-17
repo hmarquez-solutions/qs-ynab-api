@@ -52,7 +52,6 @@ BarWidget {
   }
 
   visible: true
-  clip: true
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
