@@ -174,7 +174,7 @@ Panel {
     owner: root.barIdentity
     open: root.opened
     contentWidth: keyboardPanel.fittedContentWidth(Style.space(480))
-    contentHeight: keyboardPanel.cappedContentHeight(Style.space(680))
+    contentHeight: keyboardPanel.cappedContentHeight(Style.space(600))
     focusTarget: keyCatcher
 
     PanelKeyCatcher {
