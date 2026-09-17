@@ -213,7 +213,7 @@ Panel {
               event.accepted = true
               return
             }
-            // Alt+2 or Alt+I: Income & Age tab
+            // Alt+2 or Alt+I: Income tab
             if (event.key === Qt.Key_2 || event.key === Qt.Key_I) {
               root.activeTab = 1
               root.showSettings = false
@@ -221,7 +221,7 @@ Panel {
               event.accepted = true
               return
             }
-            // Alt+3 or Alt+P: Spending Analysis tab
+            // Alt+3 or Alt+P: Spending tab
             if (event.key === Qt.Key_3 || event.key === Qt.Key_P) {
               root.activeTab = 2
               root.showSettings = false
@@ -791,7 +791,7 @@ Panel {
 
                       Text {
                         textFormat: Text.PlainText
-                        text: "• Alt+1 / Alt+B : Switch to Buckets tab\n• Alt+2 / Alt+I : Switch to Income & Age tab\n• Alt+3 / Alt+P : Switch to Spending Analysis tab\n• Alt+M         : Open Budget Switcher dropdown\n• Alt+R         : Force refresh data from YNAB\n• Alt+W         : Open YNAB web app in browser\n• Alt+S / Esc   : Toggle / exit settings\n• Esc           : Close panel popup"
+                        text: "• Alt+1 / Alt+B : Switch to Buckets tab\n• Alt+2 / Alt+I : Switch to Income tab\n• Alt+3 / Alt+P : Switch to Spending tab\n• Alt+M         : Open Budget Switcher dropdown\n• Alt+R         : Force refresh data from YNAB\n• Alt+W         : Open YNAB web app in browser\n• Alt+S / Esc   : Toggle / exit settings\n• Esc           : Close panel popup"
                         color: Qt.darker(root.foreground, 1.4)
                         font.family: root.fontFamily
                         font.pixelSize: Style.font.caption
